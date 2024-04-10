@@ -1,7 +1,7 @@
 import os
 
 
-def filter_data(input_file, output_file, stamp):
+def filter_wiki_data(input_file, output_file, stamp):
     with open(input_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
@@ -18,9 +18,12 @@ def filter_data(input_file, output_file, stamp):
 
 if __name__ == "__main__":
     current_directory = os.getcwd()  # get the current working directory
-    timestamps = ["000000", "010000", "020000", "030000"]
+    datasets_directory = os.path.join(current_directory, "datasets")  # create a new directory called datasets
+    os.makedirs(datasets_directory, exist_ok=True) 
+
+    timestamps = ["000000", "010000", "020000", "030000"] # various timestamps for different instances of the dataset
 
     for timestamp in timestamps:
         input_file = os.path.join(current_directory, f"pagecounts-20160701-{timestamp}.txt") # ensure that the file is in the same directory as this script
-        output_file = os.path.join(current_directory, f"Filtered_dataset_{timestamp}.txt")
-        filter_data(input_file, output_file, timestamp)
+        output_file = os.path.join(datasets_directory, f"Filtered_Wikipedia_Dataset_{timestamp}.txt")
+        filter_wiki_data(input_file, output_file, timestamp)
