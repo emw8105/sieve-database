@@ -6,6 +6,6 @@ class Wikipedia_Server:
         self.tree = Bp_Tree(tree_order)
 
 
-# decide on tree order here
+# decide on tree order here (should be 3 or more to be a proper b+ tree; )
 tree_order = 5
 server = Wikipedia_Server(tree_order)
