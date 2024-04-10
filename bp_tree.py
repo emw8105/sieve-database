@@ -129,6 +129,18 @@ class Bp_Tree:
                     
                     self.insert_in_parent(parent_node, value_, parent_right)
 
+    # Return leaf array
+    def leaf_array(self):
+        current_leaf = self.root
+        while(not current_leaf.leaf):
+            current_leaf = current_leaf.key_pointer_map.values()[0]
+        
+        leaf_array = []
+        while(current_leaf is not None):
+            for i, item in enumerate(list(current_leaf.key_pointer_map.items())):
+                leaf_array.append(item)
+            current_leaf = current_leaf.next_leaf_node
+        return leaf_array
     
 #testing
 
@@ -184,6 +196,9 @@ bplustree.insert(46, 0)
 
 print("printing tree: ")
 print_tree(bplustree)
+
+leaf_array = bplustree.leaf_array()
+print("this is leaf array: " + str(leaf_array))
 
 #if(bplustree.find(6, 34)):
     #print("Found")
