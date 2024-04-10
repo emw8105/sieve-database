@@ -154,26 +154,25 @@ class Bp_Tree:
 
 # more testing
 
-'''def print_tree(tree):
-        lst = [tree.root]
-        level = [0]
-        #leaf = None
-        flag = 0
-        #lev_leaf = 0
+def print_tree(tree):
+    lst = [tree.root]
+    level = [0]
 
-        while(len(lst) != 0):
-            x = lst.pop(0)
-            lev = level.pop(0)
-            if(not x.leaf):
-                children = list(x.key_pointer_map.values()).append(x.last_child_node)
-                for i, item in enumerate(children):
-                    print(item.key_pointer_map.keys())
-            else:
-                print(x.key_pointer_map.items())
-                if(flag == 0):
-                    #lev_leaf = lev
-                    #leaf = x
-                    flag = 1'''
+    while(len(lst) != 0):
+        x = lst.pop(0)
+        lev = level.pop(0)
+
+        print("THIS IS LEVEL: " + str(lev))
+        print(x.key_pointer_map.keys())
+
+        if(not x.leaf):
+            children = list(x.key_pointer_map.values())
+            children.append(x.last_child_node)
+
+            for i, item in enumerate(children):
+                lst.append(item)
+                level.append(lev+1)
+
 
 record_len = 3
 bplustree = Bp_Tree(record_len)
@@ -181,11 +180,12 @@ bplustree.insert(6, 0)
 bplustree.insert(16, 5)
 bplustree.insert(26, 0)
 bplustree.insert(36, 3)
-#bplustree.insert(46, 0)
+bplustree.insert(46, 0)
 
-#print_tree(bplustree)
+print("printing tree: ")
+print_tree(bplustree)
 
-if(bplustree.find(6, 34)):
-    print("Found")
-else:
-    print("Not found")
+#if(bplustree.find(6, 34)):
+    #print("Found")
+#else:
+    #print("Not found")
