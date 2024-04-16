@@ -109,7 +109,7 @@ class Bp_Tree:
                 if(len(parent_node.key_pointer_map.keys()) + 1 > parent_node.order):
                     parent_right = Node(parent_node.order)
                     parent_right.parent = parent_node.parent
-                    mid = int(math.ceil(parent_node.order / 2)) - 1
+                    mid = int(math.ceil((parent_node.order - 1) / 2)) 
                     parent_right.key_pointer_map = SortedDict(parent_node.key_pointer_map.items()[mid + 1:])
                     parent_right.last_child_node = parent_node.last_child_node
                     value_ = parent_node.key_pointer_map.keys()[mid]
@@ -186,13 +186,21 @@ def print_tree(tree):
                 level.append(lev+1)
 
 
-record_len = 3
+record_len = 4
 bplustree = Bp_Tree(record_len)
-bplustree.insert(6, 0)
-bplustree.insert(16, 5)
-bplustree.insert(26, 0)
-bplustree.insert(36, 3)
-bplustree.insert(46, 0)
+bplustree.insert(10, 0)
+bplustree.insert(20, 5)
+bplustree.insert(15, 0)
+bplustree.insert(22, 3)
+bplustree.insert(5, 0)
+bplustree.insert(30, 0)
+bplustree.insert(25, 0)
+bplustree.insert(17, 0)
+bplustree.insert(40, 0)
+bplustree.insert(43, 0)
+bplustree.insert(12, 0)
+bplustree.insert(50, 0)
+bplustree.insert(35, 0)
 
 print("printing tree: ")
 print_tree(bplustree)
