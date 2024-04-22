@@ -27,3 +27,11 @@ if __name__ == "__main__":
         input_file = os.path.join(current_directory, f"pagecounts-20160701-{timestamp}.txt") # ensure that the file is in the same directory as this script
         output_file = os.path.join(datasets_directory, f"Filtered_Wikipedia_Dataset_{timestamp}.txt")
         filter_wiki_data(input_file, output_file, timestamp)
+
+def parse_dataset(dataset_file):
+    with open(dataset_file, 'r') as file:
+        for line in file:
+            parts = line.strip().split(' ')
+            if len(parts) == 5:
+                language, page_name, viewcount, size, timestamp = parts
+                yield language, page_name, int(viewcount), int(size), timestamp
