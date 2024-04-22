@@ -2,7 +2,9 @@
 
 import math
 from sortedcontainers import SortedDict, SortedList
-from dataset_parser import parse_dataset
+from dataset_parser import check_viewcount, parse_dataset
+
+test_key = 27
 
 class Node:
     def __init__(self, order):
@@ -29,6 +31,10 @@ class Bp_Tree:
     def insert(self, key, pointer):
         old_node = self.search(key)
         old_node.insert_at_leaf(key, pointer)
+
+        if key == test_key:
+            print(f"Inserted key: {key}, pointer: {pointer}")
+            print(f"Key-pointer map after insertion: {old_node.key_pointer_map}")
         
         # Reshape tree due to overflow 
         if(len(old_node.key_pointer_map.keys()) == old_node.order):
@@ -44,6 +50,7 @@ class Bp_Tree:
     
     # Return leaf node for the given key
     def search(self, key):
+        # print(f"Searching for key: {key}")
         current_node = self.root
 
         while(not current_node.leaf):
@@ -122,6 +129,45 @@ class Bp_Tree:
                 leaf_array.append(item)
             current_leaf = current_leaf.next_leaf_node
         return leaf_array
+    
+    # TEST METHODS FOR DETERMINING IF SELECT KEYS ARE IN THE TREE
+    def traverse_and_find_all(self, key):
+        # Start from the root node
+        current_node = self.root
+        matching_rows = []
+
+        # Traverse down to the leaf nodes
+        while not current_node.leaf:
+            for k, v in current_node.key_pointer_map.items():
+                if k == key:
+                    matching_rows.append(v)
+                current_node = v
+
+        # Check in the leaf nodes
+        for k, v in current_node.key_pointer_map.items():
+            if k == key:
+                matching_rows.append(v)
+
+        # Return all matching rows
+        return matching_rows
+    
+    def traverse_and_collect(self):
+        # Start from the root node
+        current_node = self.root
+        keys_and_values = []
+
+        # Traverse down to the leaf nodes
+        while not current_node.leaf:
+            current_node = current_node.key_pointer_map.values()[0]
+
+        # Collect keys and values from the leaf nodes
+        while current_node is not None:
+            for k, v in current_node.key_pointer_map.items():
+                keys_and_values.append((k, v))
+            current_node = current_node.next_leaf_node
+
+        # Return all keys and values
+        return keys_and_values
 
 
 
@@ -146,15 +192,33 @@ for block_index, dataset_file in enumerate(dataset_files):
 
 
 # TESTING
-key_to_search = 10  # replace with desired test key, in this case will print all records in the tree with viewcount = 10
-block_indices = bplustree.search(key_to_search).key_pointer_map.get(key_to_search)
+key_to_search = test_key  # replace with desired test key
+leaf_node = bplustree.search(key_to_search)
+if leaf_node is not None:
+    block_indices = leaf_node.key_pointer_map.get(key_to_search)
+    if block_indices is not None:
+        # for each block index associated with the key, parse the corresponding dataset file and print the rows with the key
+        for block_index in block_indices:
+            dataset_file = dataset_files[block_index]
+            for record in parse_dataset(dataset_file):
+                language, page_name, viewcount, size, timestamp = record
+                if int(viewcount) == key_to_search:
+                    print(record)
+    else:
+        print(f"Key {key_to_search} not found in the B+ tree.")
+else:
+    print(f"Key {key_to_search} not found in the B+ tree.")
 
-# for each block index associated with the key, parse the corresponding dataset file and print the rows with the key
-for block_index in block_indices:
-    dataset_file = dataset_files[block_index]
-    for record in parse_dataset(dataset_file):
-        language, page_name, viewcount, size, timestamp = record
-        if int(viewcount) == key_to_search:
-            print(record)
+# test w/o search method
+matching_rows = bplustree.traverse_and_find_all(test_key)
+print(f"Rows with key {test_key}: {matching_rows}")
 
-leaf_array = bplustree.leaf_array()
+#keys_and_values = bplustree.traverse_and_collect()
+#print(f"Keys and values in the B+ tree: {keys_and_values}")
+
+print("Double checking the records in the dataset for the test value: {key_to_search}")
+test_row_count = 12
+rows = check_viewcount(dataset_files, key_to_search, test_row_count)
+print(f"Value {key_to_search} exists in third column, printing first {test_row_count} rows: {rows}")
+
+# leaf_array = bplustree.leaf_array()
