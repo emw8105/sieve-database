@@ -216,7 +216,7 @@ print(f"Rows with key {test_key}: {matching_rows}")
 #keys_and_values = bplustree.traverse_and_collect()
 #print(f"Keys and values in the B+ tree: {keys_and_values}")
 
-print("Double checking the records in the dataset for the test value: {key_to_search}")
+print(f"Double checking the records in the dataset for the test value: {key_to_search}")
 test_row_count = 12
 rows = check_viewcount(dataset_files, key_to_search, test_row_count)
 print(f"Value {key_to_search} exists in third column, printing first {test_row_count} rows: {rows}")
