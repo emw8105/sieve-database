@@ -2,7 +2,7 @@
 
 import queue as q
 import math
-from dataset_parser import check_viewcount, parse_dataset
+from sortedcontainers import SortedDict
 from node import Node
 
 class Bp_Tree:
