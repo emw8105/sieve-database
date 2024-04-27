@@ -1,5 +1,7 @@
+from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 from bp_tree import Bp_Tree
-from dataset_parser import parse_dataset
+from dataset_parser import parse_dataset, search_block
 import time
 
 
@@ -22,6 +24,8 @@ for block_index, dataset_file in enumerate(dataset_files):
         bplustree.insert(int(viewcount), block_index)
     print(f"Finished processing block {block_index}.")
 
+# partition the B+ tree
+print("Partitioning and Segmenting the B+ tree...")
 bplustree.partition_tree()
 
 
@@ -29,35 +33,48 @@ bplustree.partition_tree()
 key_to_search = int(input("Enter a key to search for: "))  # get user input for test key
 start_time = time.time()  # start the stopwatch for benchmarking query time
 leaf_node = bplustree.search(key_to_search)
-search_end_time = time.time()  # stop the stopwatch after the search
+
+buffered_records = []
+buffer_size = 100
 
 with open('query_output.txt', 'w') as f:  # open the output file in write mode
-    record_start_time = time.time()  # start the stopwatch for the record searching
     record_count = 0  # initialize the record counter
     if leaf_node is not None:
         block_indices = leaf_node.key_pointer_map.get(key_to_search)
         if block_indices is not None:
-            # for each block index associated with the key, parse the corresponding dataset file and print the rows with the key
-            for block_index in block_indices:
-                dataset_file = dataset_files[block_index]
-                for record in parse_dataset(dataset_file):
-                    language, page_name, viewcount, size, timestamp = record
-                    if int(viewcount) == key_to_search:
-                        print(record, file=f)  # print the record to the output file
-                        record_count += 1  # increment the record counter
+            with ThreadPoolExecutor(max_workers=5) as executor:  # adjust max_workers based on your requirements
+                future_to_block_index = {executor.submit(search_block, block_index, key_to_search, dataset_files): block_index for block_index in block_indices}
+                for future in concurrent.futures.as_completed(future_to_block_index):
+                    block_index = future_to_block_index[future]
+                    try:
+                        records = future.result()
+                    except Exception as exc:
+                        print(f'Block {block_index} generated an exception: {exc}')
+                    else:
+                        for record in records:
+                            buffered_records.append(record)  # add the records to the buffer
+                            record_count += 1  # increment the record counter
+                            if len(buffered_records) >= buffer_size:
+                                for record in buffered_records:
+                                    print(record, file=f)  # print the records in the buffer to the output file
+                                buffered_records.clear()  # clear the buffer
         else:
             print(f"Key {key_to_search} not found in the B+ tree.")
     else:
         print(f"Key {key_to_search} not found in the B+ tree.")
 
-record_end_time = time.time()  # stop the stopwatch after the record searching
+    # print any remaining records in the buffer
+    for record in buffered_records:
+        print(record, file=f)
+
+end_time = time.time()  # stop the stopwatch after the record searching
 print("Query complete, results of query printed to query_output.txt.")
-print(f"Tree search time: {format(search_end_time - start_time, '.10f')} seconds")  # print the tree search time
-print(f"Record return time: {format(record_end_time - record_start_time, '.10f')} seconds")  # print the record search time
+print(f"Total return time: {format(end_time - start_time, '.10f')} seconds")  # print the total return time
 print(f"Number of records found: {record_count}")  # print the number of records found
 
-print("\nPartition Information:")
-bplustree.print_all_partitions()
+# # print the partitions of the B+ tree
+# print("\nPartition Information:")
+# bplustree.print_all_partitions()
 
 # # print the B+ tree with all its keys and pointers
 # bplustree.print_tree(bplustree.root)

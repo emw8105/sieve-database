@@ -125,10 +125,13 @@ class Bp_Tree:
     ### PRINT METHODS FOR DEBUGGING ###
     def print_all_partitions(self):
         node = self.get_leftmost_node()
+        i = 0
         while node is not None:
+            print(f"Node {i}:")
             for start_key, end_key, pointer_list in node.partitions:
                 print(f"  Partition: start_key={start_key}, end_key={end_key}, pointer_list={pointer_list}")
             node = node.next_leaf_node
+            i += 1
     
     def print_all_key_pointer_maps(self):
         node = self.get_leftmost_node()
