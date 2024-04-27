@@ -4,6 +4,7 @@ import queue as q
 import math
 from sortedcontainers import SortedDict
 from node import Node
+import sys
 
 class Bp_Tree:
     def __init__(self, order):
@@ -117,9 +118,7 @@ class Bp_Tree:
     # Partition the tree into nodes by iterating over each node and creating partitions and segments within them
     def partition_tree(self):
         # start from the leftmost leaf node
-        current_node = self.root
-        while not current_node.leaf:
-            current_node = current_node.key_pointer_map.values()[0]
+        current_node = self.get_leftmost_node()
 
         # traverse the tree and partition each node
         while current_node is not None:
@@ -145,6 +144,14 @@ class Bp_Tree:
             print(f"Node {node}:")
             for key, pointer_list in node.key_pointer_map.items():
                 print(f"  Key: {key}, Pointer List: {pointer_list}")
+            node = node.next_leaf_node
+
+    def print_memory_usage(self):
+        node = self.get_leftmost_node()
+        while node is not None:
+            key_map_memory = sys.getsizeof(node.key_pointer_map)
+            partition_memory = sys.getsizeof(node.partitions)
+            print(f"Node {node}: Key Map Memory = {key_map_memory} bytes, Partition Memory = {partition_memory} bytes")
             node = node.next_leaf_node
 
     # Return leaf array

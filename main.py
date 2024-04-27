@@ -73,6 +73,10 @@ print("Query complete, results of query printed to query_output.txt.")
 print(f"Total return time: {format(end_time - start_time, '.10f')} seconds")  # print the total return time
 print(f"Number of records found: {record_count}")  # print the number of records found
 
+# print the memory usage of the B+ tree
+print("\nMemory Usage Information:")
+bplustree.print_memory_usage()
+
 # # print the partitions of the B+ tree
 # print("\nPartition Information:")
 # bplustree.print_all_partitions()
