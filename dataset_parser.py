@@ -37,6 +37,15 @@ def parse_dataset(dataset_file):
                 language, page_name, viewcount, size, timestamp = parts
                 yield language, page_name, int(viewcount), int(size), timestamp
 
+def search_block(block_index, key_to_search, dataset_files):
+        records = []
+        dataset_file = dataset_files[block_index]
+        for record in parse_dataset(dataset_file):
+            language, page_name, viewcount, size, timestamp = record
+            if int(viewcount) == key_to_search:
+                records.append(record)
+        return records
+
 # Function to check for rows with a specific viewcount in the dataset for testing purposes to compare with the B+ tree's search results
 def check_viewcount(files, value, max_rows=10):
     rows = []
