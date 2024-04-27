@@ -1,5 +1,6 @@
 # Modified version of Geeks for Geeks B+ tree
 
+import queue as q
 import math
 import time
 from sortedcontainers import SortedDict, SortedList
@@ -9,6 +10,7 @@ class Node:
     def __init__(self, order):
         self.order = order
         self.key_pointer_map = SortedDict() # key=int; pointer=SortedList() for leaf & left child Node for internal
+        self.partitions = []
         self.last_child_node = None
         self.parent = None
         self.next_leaf_node = None
@@ -17,10 +19,30 @@ class Node:
     def insert_at_leaf(self, key, pointer):
         if(key in self.key_pointer_map.keys()): # Key exists 
             if(pointer not in self.key_pointer_map.get(key)): # Pointer not in list
-                self.key_pointer_map.get(key).add(pointer) 
+                self.key_pointer_map.get(key).add(pointer)
         else: # Key does not exist 
             self.key_pointer_map[key] = SortedList([pointer])
-                
+        # self.create_partitions()  # could technically make partitions on each insert, but paper uses an explicit method to handle it in bulk
+    
+    def create_node_partitions(self):
+        self.partitions = []
+        keys = list(self.key_pointer_map.keys())
+        if keys:
+            start_key = keys[0]
+            current_pointer_list = self.key_pointer_map[start_key]
+            for key in keys[1:]:
+                pointer_list = self.key_pointer_map[key]
+                if pointer_list != current_pointer_list:
+                    self.partitions.append((start_key, key, current_pointer_list))
+                    start_key = key
+                    current_pointer_list = pointer_list
+            # Add the last partition
+            self.partitions.append((start_key, None, current_pointer_list))
+
+
+    def print_partitions(self):
+        for start_key, end_key, pointers in self.partitions:
+            print(f"Start Key: {start_key}, End Key: {end_key}, Blocks: {pointers}")
 
 class Bp_Tree:
     def __init__(self, order):
@@ -42,19 +64,27 @@ class Bp_Tree:
             old_node.key_pointer_map = SortedDict(old_node.key_pointer_map.items()[:mid])
             old_node.next_leaf_node = new_node
             self.insert_in_parent(old_node, new_node.key_pointer_map.keys()[0], new_node)
-    
+
     # Return leaf node for the given key
     def search(self, key):
-        # print(f"Searching for key: {key}")
         current_node = self.root
-
-        while(not current_node.leaf):
-            child_index = current_node.key_pointer_map.bisect_right(key)
-            if(child_index == len(current_node.key_pointer_map)):
-                current_node = current_node.last_child_node
+        while not current_node.leaf:
+            if not current_node.partitions:
+                # Old method
+                child_index = current_node.key_pointer_map.bisect_right(key)
+                if child_index == len(current_node.key_pointer_map):
+                    current_node = current_node.last_child_node
+                else:
+                    next_key = current_node.key_pointer_map.keys()[child_index]
+                    current_node = current_node.key_pointer_map.get(next_key)
             else:
-                next_key = current_node.key_pointer_map.keys()[child_index]
-                current_node = current_node.key_pointer_map.get(next_key)
+                # New method
+                for start_key, end_key, pointers in current_node.partitions:
+                    if start_key <= key <= end_key:
+                        current_node = pointers[0]
+                        break
+                else:
+                    current_node = current_node.last_child_node
         return current_node
 
     # Return true if mapping exists; false otherwise
@@ -112,6 +142,38 @@ class Bp_Tree:
                     
                     self.insert_in_parent(parent_node, value_, parent_right)
 
+    def get_leftmost_node(self):
+        node = self.root
+        while not node.leaf:
+            node = node.key_pointer_map.peekitem(0)[1]  # Get the first child node
+        return node
+    
+    def partition_tree(self):
+        # Start from the leftmost leaf node
+        current_node = self.root
+        while not current_node.leaf:
+            current_node = current_node.key_pointer_map.values()[0]
+
+        # Traverse the tree and partition each node
+        while current_node is not None:
+            current_node.create_node_partitions()
+            current_node = current_node.next_leaf_node
+
+    def print_all_partitions(self):
+        node = self.get_leftmost_node()
+        while node is not None:
+            for start_key, end_key, pointer_list in node.partitions:
+                print(f"  Partition: start_key={start_key}, end_key={end_key}, pointer_list={pointer_list}")
+            node = node.next_leaf_node
+    
+    def print_all_key_pointer_maps(self):
+        node = self.get_leftmost_node()
+        while node is not None:
+            print(f"Node {node}:")
+            for key, pointer_list in node.key_pointer_map.items():
+                print(f"  Key: {key}, Pointer List: {pointer_list}")
+            node = node.next_leaf_node
+
     # Return leaf array
     def leaf_array(self):
         current_leaf = self.root
@@ -125,25 +187,26 @@ class Bp_Tree:
             current_leaf = current_leaf.next_leaf_node
         return leaf_array
 
-# prints the values of all keys with their corresponding pointers in the B+ tree
-def print_tree(node):
-    if node is None:
-        return
+    # prints the values of all keys with their corresponding pointers in the B+ tree
+    def print_tree(self, node):
+        if node is None:
+            return
 
-    # Print keys and pointers of the current node
-    for key, pointers in node.key_pointer_map.items():
-        print(f"Key: {key}, Pointers: {pointers}")
+        # Print keys and pointers of the current node
+        for key, pointers in node.key_pointer_map.items():
+            print(f"Key: {key}, Pointers: {pointers}")
 
-    # If the node is not a leaf, recursively print its child nodes
-    if not node.leaf:
-        for child_node in node.key_pointer_map.values():
-            print_tree(child_node)
+        # If the node is not a leaf, recursively print its child nodes
+        if not node.leaf:
+            for child_node in node.key_pointer_map.values():
+                self.print_tree(child_node)
 
-    # Print the last child node if it exists
-    if node.last_child_node is not None:
-        print_tree(node.last_child_node)
+        # Print the last child node if it exists
+        if node.last_child_node is not None:
+            self.print_tree(node.last_child_node)
 
 
+### SETUP AND DATA INSERTION ###
 # create a B+ tree
 record_len = 40
 bplustree = Bp_Tree(record_len)
@@ -162,9 +225,10 @@ for block_index, dataset_file in enumerate(dataset_files):
         bplustree.insert(int(viewcount), block_index)
     print(f"Finished processing block {block_index}.")
 
+bplustree.partition_tree()
 
 
-# TESTING
+### TESTING ###
 key_to_search = int(input("Enter a key to search for: "))  # get user input for test key
 start_time = time.time()  # start the stopwatch for benchmarking query time
 leaf_node = bplustree.search(key_to_search)
@@ -185,9 +249,9 @@ with open('query_output.txt', 'w') as f:  # open the output file in write mode
                         print(record, file=f)  # print the record to the output file
                         record_count += 1  # increment the record counter
         else:
-            print(f"Key {key_to_search} not found in the B+ tree.", file=f)
+            print(f"Key {key_to_search} not found in the B+ tree.")
     else:
-        print(f"Key {key_to_search} not found in the B+ tree.", file=f)
+        print(f"Key {key_to_search} not found in the B+ tree.")
 
 record_end_time = time.time()  # stop the stopwatch after the record searching
 print("Query complete, results of query printed to query_output.txt.")
@@ -195,5 +259,8 @@ print(f"Tree search time: {format(search_end_time - start_time, '.10f')} seconds
 print(f"Record return time: {format(record_end_time - record_start_time, '.10f')} seconds")  # print the record search time
 print(f"Number of records found: {record_count}")  # print the number of records found
 
+print("\nPartition Information:")
+bplustree.print_all_partitions()
+
 # # print the B+ tree with all its keys and pointers
-# print_tree(bplustree.root)
+# bplustree.print_tree(bplustree.root)
