@@ -37,6 +37,7 @@ leaf_node = bplustree.search(key_to_search)
 buffered_records = []
 buffer_size = 100
 
+# search for the key in the B+ tree and write the results to a file
 with open('query_output.txt', 'w') as f:  # open the output file in write mode
     record_count = 0  # initialize the record counter
     if leaf_node is not None:
