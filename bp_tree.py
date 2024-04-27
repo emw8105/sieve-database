@@ -2,47 +2,8 @@
 
 import queue as q
 import math
-import time
-from sortedcontainers import SortedDict, SortedList
 from dataset_parser import check_viewcount, parse_dataset
-
-class Node:
-    def __init__(self, order):
-        self.order = order
-        self.key_pointer_map = SortedDict() # key=int; pointer=SortedList() for leaf & left child Node for internal
-        self.partitions = []
-        self.last_child_node = None
-        self.parent = None
-        self.next_leaf_node = None
-        self.leaf = False
-    
-    def insert_at_leaf(self, key, pointer):
-        if(key in self.key_pointer_map.keys()): # Key exists 
-            if(pointer not in self.key_pointer_map.get(key)): # Pointer not in list
-                self.key_pointer_map.get(key).add(pointer)
-        else: # Key does not exist 
-            self.key_pointer_map[key] = SortedList([pointer])
-        # self.create_partitions()  # could technically make partitions on each insert, but paper uses an explicit method to handle it in bulk
-    
-    def create_node_partitions(self):
-        self.partitions = []
-        keys = list(self.key_pointer_map.keys())
-        if keys:
-            start_key = keys[0]
-            current_pointer_list = self.key_pointer_map[start_key]
-            for key in keys[1:]:
-                pointer_list = self.key_pointer_map[key]
-                if pointer_list != current_pointer_list:
-                    self.partitions.append((start_key, key, current_pointer_list))
-                    start_key = key
-                    current_pointer_list = pointer_list
-            # Add the last partition
-            self.partitions.append((start_key, None, current_pointer_list))
-
-
-    def print_partitions(self):
-        for start_key, end_key, pointers in self.partitions:
-            print(f"Start Key: {start_key}, End Key: {end_key}, Blocks: {pointers}")
+from node import Node
 
 class Bp_Tree:
     def __init__(self, order):
@@ -159,6 +120,9 @@ class Bp_Tree:
             current_node.create_node_partitions()
             current_node = current_node.next_leaf_node
 
+
+
+    ### PRINT METHODS FOR DEBUGGING ###
     def print_all_partitions(self):
         node = self.get_leftmost_node()
         while node is not None:
@@ -204,63 +168,3 @@ class Bp_Tree:
         # Print the last child node if it exists
         if node.last_child_node is not None:
             self.print_tree(node.last_child_node)
-
-
-### SETUP AND DATA INSERTION ###
-# create a B+ tree
-record_len = 40
-bplustree = Bp_Tree(record_len)
-
-# parse the dataset files and insert the viewcounts into the B+ tree
-dataset_files = ['datasets/Filtered_Wikipedia_Dataset_000000.txt', 
-                 'datasets/Filtered_Wikipedia_Dataset_010000.txt', 
-                 'datasets/Filtered_Wikipedia_Dataset_020000.txt', 
-                 'datasets/Filtered_Wikipedia_Dataset_030000.txt']
-
-# enumerate over the dataset files, provides both the index of each file (i.e. block_index) and the file itself.
-for block_index, dataset_file in enumerate(dataset_files):
-    print(f"Processing block {block_index} from file {dataset_file}...")
-    for record in parse_dataset(dataset_file):
-        language, page_name, viewcount, size, timestamp = record
-        bplustree.insert(int(viewcount), block_index)
-    print(f"Finished processing block {block_index}.")
-
-bplustree.partition_tree()
-
-
-### TESTING ###
-key_to_search = int(input("Enter a key to search for: "))  # get user input for test key
-start_time = time.time()  # start the stopwatch for benchmarking query time
-leaf_node = bplustree.search(key_to_search)
-search_end_time = time.time()  # stop the stopwatch after the search
-
-with open('query_output.txt', 'w') as f:  # open the output file in write mode
-    record_start_time = time.time()  # start the stopwatch for the record searching
-    record_count = 0  # initialize the record counter
-    if leaf_node is not None:
-        block_indices = leaf_node.key_pointer_map.get(key_to_search)
-        if block_indices is not None:
-            # for each block index associated with the key, parse the corresponding dataset file and print the rows with the key
-            for block_index in block_indices:
-                dataset_file = dataset_files[block_index]
-                for record in parse_dataset(dataset_file):
-                    language, page_name, viewcount, size, timestamp = record
-                    if int(viewcount) == key_to_search:
-                        print(record, file=f)  # print the record to the output file
-                        record_count += 1  # increment the record counter
-        else:
-            print(f"Key {key_to_search} not found in the B+ tree.")
-    else:
-        print(f"Key {key_to_search} not found in the B+ tree.")
-
-record_end_time = time.time()  # stop the stopwatch after the record searching
-print("Query complete, results of query printed to query_output.txt.")
-print(f"Tree search time: {format(search_end_time - start_time, '.10f')} seconds")  # print the tree search time
-print(f"Record return time: {format(record_end_time - record_start_time, '.10f')} seconds")  # print the record search time
-print(f"Number of records found: {record_count}")  # print the number of records found
-
-print("\nPartition Information:")
-bplustree.print_all_partitions()
-
-# # print the B+ tree with all its keys and pointers
-# bplustree.print_tree(bplustree.root)
