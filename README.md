@@ -18,7 +18,8 @@ This repository contains an implementation of Sieve, a learned data-skipping ind
 To set up and run the project, follow these steps:
 
 1. Install the required dependencies.
-2. Run `main.py` to start the application.
+2. Navigate to the directory where the files are located
+3. Run `main.py` by typing `python main.py` into the terminal to start the application.
 
 ## Sources
 ### Dataset:
