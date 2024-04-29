@@ -23,14 +23,14 @@ To set up and run the project, follow these steps:
 ## Sources
 ### Dataset:
 - Description: The dataset used to demonstrate the proficiency of Sieve's algorithms, as featured in the paper. We specifically utilized a subset of data from the Wikimedia pagecounts, filtered to exclude non-English pages and pages with a view count of 1.
-- Download Link: Wikimedia Pagecounts Raw Data
+- Download Link: [Wikimedia Pagecounts Raw Data](https://dumps.wikimedia.org/other/pagecounts-raw/)
 - Date: July 1, 2016
 - Files:
   - pagecounts-20160701-000000.gz (72MB)
   - pagecounts-20160701-010000.gz (84MB)
   - pagecounts-20160701-020000.gz (90MB)
   - pagecounts-20160701-030000.gz (85MB)
-- Direct Link: July 1, 2016 Data Slice - https://dumps.wikimedia.org/other/pagecounts-raw/2016/2016-07/
+- Direct Link: [July 1, 2016 Data Slice](https://dumps.wikimedia.org/other/pagecounts-raw/2016/2016-07/)
 
 ### Research Paper:
 - Title: Sieve: A Learned Data-Skipping Index for Data Analytics
